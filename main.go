@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"os/exec"
 )
 
@@ -27,7 +29,26 @@ func main() {
 
     mux.HandleFunc("/interpret", func(w http.ResponseWriter, r *http.Request) {
         asm := r.PostFormValue("asm")
-        cmd := exec.Command("./topasm", fmt.Sprintf("--text=%s", asm))
+        file, err := ioutil.TempFile("", "asm-*.topasm")
+
+        if err != nil {
+            log.Println(err)
+            w.Write([]byte("Post Error 1"))
+            return
+        }
+
+        defer os.Remove(file.Name())
+
+        _, err = file.WriteString(asm)
+
+        if err != nil {
+            log.Println(err)
+            w.Write([]byte("Post Error 2"))
+            return
+        }
+
+        file.Close()
+        cmd := exec.Command("./topasm", fmt.Sprintf("--file=%s", file.Name()))
 
         var buf bytes.Buffer
         cmd.Stdout = &buf
