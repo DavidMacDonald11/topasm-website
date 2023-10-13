@@ -58,6 +58,9 @@ func main() {
         w.Write([]byte(buf.String()))
     })
 
+    port := os.Getenv("PORT")
+    if port == "" { port = "8080" }
+
     log.Println("Starting server...")
-    log.Fatal(http.ListenAndServe(":8080", mux))
+    log.Fatal(http.ListenAndServe(":" + port, mux))
 }
