@@ -30,7 +30,7 @@
             <div class="row">
                 <div class="col-sm-6 form-group">
                     <form hx-post="/interpret" hx-target="#answer">
-                        <textarea rows="30" cols="50" name="asm" class="form-control"></textarea>
+                        <textarea rows="30" cols="50" name="asm" class="form-control" placeholder="Enter topasm code here!"></textarea>
                         <button type="submit" class="btn btn-primary" hx-indicator="#indicator">Interpret</button>
                         <p id="indicator" class="htmx-indicator">Loading...</p>
                     </form>
