@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"html/template"
 	"io/ioutil"
 	"log"
@@ -18,9 +17,6 @@ type Data struct {
 func main() {
     mux := http.NewServeMux()
     tmpl := template.Must(template.ParseFiles("views/index.html"))
-
-    fs := http.FileServer(http.Dir("./static"))
-    mux.Handle("/static/", http.StripPrefix("/static/", fs))
 
     mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
         data := Data{Answer: ""}
@@ -48,7 +44,7 @@ func main() {
         }
 
         file.Close()
-        cmd := exec.Command("./topasm", fmt.Sprintf("--file=%s", file.Name()))
+        cmd := exec.Command("./topasm", file.Name())
 
         var buf bytes.Buffer
         cmd.Stdout = &buf
