@@ -1,0 +1,33 @@
+#indicator {
+    opacity: 0;
+    transition: opacity 500ms ease-in;
+}
+
+.htmx-request #indicator {
+    opacity: 1;
+}
+
+.htmx-request#indicator {
+    opacity: 1;
+}
+
+.centered {
+    text-align: center;
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    min-height: 90vh;
+    margin: 0;
+}
+
+.main-container {
+    margin-top: 50px;
+    marign-bottom: 50px;
+    flex: 1;
+}
+
+.footer {
+    flex-shrink: 0;
+}

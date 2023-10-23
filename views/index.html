@@ -1,51 +1,66 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <title>Topasm</title>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
-    </head>
+    {{ template "tmpl/header" . }}
     <body>
-        <style>
-            .htmx-indicator {
-                opacity: 0;
-                transition: opacity 500ms ease-in;
-            }
-
-            .htmx-request .htmx-indicator {
-                opacity: 1
-            }
-
-            .htmx-request.htmx-indicator {
-                opacity: 1
-            }
-        </style>
-
-
-        <div class="container-fluid">
-            <div class="row">
-                <h1 class="text-center">The Obviously Practical Assembly (Language)</h1>
-            </div>
-            <div class="row">
-                <div class="col-sm-6 form-group">
-                    <form hx-post="/interpret" hx-target="#answer">
-                        <textarea rows="30" cols="50" name="asm" class="form-control" placeholder="Enter topasm code here!"></textarea>
-                        <button type="submit" class="btn btn-primary" hx-indicator="#indicator">Interpret</button>
-                        <p id="indicator" class="htmx-indicator">Loading...</p>
+        <div class="ui container main-container">
+            <h1 class="ui header centered">The Obviously Practical Assembly (Language)</h1>
+            <div class="ui grid">
+                <div class="eight wide column">
+                    <form class="ui form" hx-post="/interpret" hx-target="#output" hx-swap="innerHTML" hx-indicator="#indicator">
+                        <div class="field" id="input">
+                            {{ block "input" . }}
+                            <textarea rows="30" name="asm" placeholder="Enter Topasm code here!">{{ .Text }}</textarea>
+                            {{ end }}
+                        </div>
+                        <div class="ui segment centered">
+                            <button class="ui primary button" type="submit">
+                                <i class="code icon"></i>
+                                Interpret
+                            </button>
+                            <i class="notched circle loading icon" id="indicator"></i>
+                        </div>
                     </form>
                 </div>
-                <div class="col-sm-6">
-                    <textarea rows="15" cols="40" readonly id="answer" class="form-control">{{ .Answer }}</textarea>
+                <div class="eight wide column">
+                    <div id="output">
+                    {{ block "result" . }}
+                        <div class="ui form">
+                            <textarea rows="15" placeholder="Output" readonly>{{ .Output }}</textarea>
+                        </div>
+                        {{ if .Error }}
+                        <div class="ui bottom attached error message">
+                            <i class="exclamation icon"></i>
+                            {{ .Error }}
+                        </div>
+                        {{ end }}
+                    {{ end }}
+                    </div>
+                    <div class="ui segment centered">
+                        <h4>Try Out Some Existing Examples</h4>
+                        <button class="ui secondary button" hx-get="/example/0" hx-target="#input" hx-swap="innerHTML">Hello World</button>
+                        <button class="ui secondary button" hx-get="/example/1" hx-target="#input" hx-swap="innerHTML">Fibonacci Sequence</button>
+                        <button class="ui secondary button" hx-get="/example/2" hx-target="#input" hx-swap="innerHTML">Divisors of Large Int</button>
+                    </div>
+                    <div class="ui segment centered">
+                        <a href="https://github.com/DavidMacDonald11/topasm-interpreter.go">
+                            Check out the interpreter on GitHub!
+                        </a>
+                    </div>
                 </div>
             </div>
-            <div class="row">
-                <a href="https://github.com/DavidMacDonald11/topasm-interpreter.go">
-                    Check out the interpreter on GitHub!
-                </a>
+        </div>
+        <div class="ui inverted vertical footer segment">
+            <div class="ui container">
+                <h5>Note:
+                    If this page stops behaving as expected,
+                    you may need to refresh as we are deployed to
+                    <a href="https://render.com"/>Render</a>
+                    using a free tier.
+                    This means the server will spin down with inactivity.
+                    I apologize for the inconvenience.
+                </h5>
             </div>
         </div>
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.min.js" integrity="sha384-cuYeSxntonz0PPNlHhBs68uyIAVpIIOZZ5JqeqvYYIcEL727kskC66kF92t6Xl2V" crossorigin="anonymous"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/htmx/1.9.6/htmx.min.js" integrity="sha512-tGWc4YBM6ag1pJndcieiU2r+lJXdzBRk70mHE13JoGeZI/QdWQkQ6q1CL1xYdJtTOfARf5oPcxJCnS6bLaM+KA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     </body>
+    {{ template "tmpl/footer" . }}
 </html>

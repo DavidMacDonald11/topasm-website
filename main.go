@@ -2,82 +2,86 @@ package main
 
 import (
 	"bytes"
-	"html/template"
+	"fmt"
 	"io/ioutil"
 	"log"
-	"net/http"
 	"os"
 	"os/exec"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/template/html/v2"
 )
 
-type Data struct {
-    Answer string
+type Code struct {
+    Asm string
 }
 
 func main() {
-    mux := http.NewServeMux()
-    tmpl := template.Must(template.ParseFiles("views/index.html"))
+    app := fiber.New(fiber.Config{Views: html.New("./views", ".html")})
+    app.Static("/", "./public")
 
-    mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-        data := Data{Answer: `Try this code:
-        ; Fibonacci Numbers
-        ; using #7 and #8 to hold last and current, respectively
-        move 0 into #7
-        move 1 into #8
-
-        loop:
-            ; print current value and newline
-            move #8 into #0
-            call printi
-            move 10 into #0
-            call printc
-
-            ; last = current and current = current + last
-            move #8 into #6 ; temp value
-            add #7 into #8
-            move #6 into #7
-
-            ; loop while current is less than or equal to 610
-            comp #8 with 610
-            jumpLTE loop
-            `}
-        tmpl.Execute(w, data)
-    })
-
-    mux.HandleFunc("/interpret", func(w http.ResponseWriter, r *http.Request) {
-        asm := r.PostFormValue("asm")
-        file, err := ioutil.TempFile("", "asm-*.topasm")
-
-        if err != nil {
-            log.Println(err)
-            w.Write([]byte("Post Error 1"))
-            return
-        }
-
-        defer os.Remove(file.Name())
-
-        _, err = file.WriteString(asm)
-
-        if err != nil {
-            log.Println(err)
-            w.Write([]byte("Post Error 2"))
-            return
-        }
-
-        file.Close()
-        cmd := exec.Command("./topasm", file.Name())
-
-        var buf bytes.Buffer
-        cmd.Stdout = &buf
-        cmd.Stderr = &buf
-
-        cmd.Run()
-        w.Write([]byte(buf.String()))
-    })
+    app.Get("/", getRoot)
+    app.Get("/example/:id", getExample)
+    app.Post("/interpret", postInterpret)
 
     port := os.Getenv("PORT")
-    if port == "" { port = "8080" }
+    if port == "" { port = "3000" }
 
     log.Println("Starting server...")
-    log.Fatal(http.ListenAndServe(":" + port, mux))
+    log.Fatal(app.Listen(":" + port))
+}
+
+func getRoot(c *fiber.Ctx) error {
+    return c.Render("index", fiber.Map{})
+}
+
+func getExample(c *fiber.Ctx) error {
+    id := c.Params("id")
+    name := fmt.Sprintf("./examples/%s.topasm", id)
+    content, err := ioutil.ReadFile(name)
+
+    if err != nil {
+        log.Println(err)
+        return c.Render("input", fiber.Map{})
+    }
+
+    return c.Render("input", fiber.Map{"Text": string(content)})
+}
+
+func postInterpret(c *fiber.Ctx) error {
+    code := new(Code)
+    err := c.BodyParser(code)
+
+    if err != nil {
+        return renderInternalError(c, err)
+    }
+
+    file, err := ioutil.TempFile("", "asm-*.topasm")
+
+    if err != nil {
+        return renderInternalError(c, err)
+    }
+
+    defer os.Remove(file.Name())
+
+    _, err = file.WriteString(code.Asm)
+
+    if err != nil {
+        return renderInternalError(c, err)
+    }
+
+    file.Close()
+    cmd := exec.Command("./topasm", file.Name())
+
+    var buf bytes.Buffer
+    cmd.Stdout = &buf
+    cmd.Stderr = &buf
+
+    cmd.Run()
+    return c.Render("result", fiber.Map{"Output": buf.String()})
+}
+
+func renderInternalError(c *fiber.Ctx, err error) error {
+    log.Println(err)
+    return c.Render("result", fiber.Map{"Error": "Internal server error"})
 }
